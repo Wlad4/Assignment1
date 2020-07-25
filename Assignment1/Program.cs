@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Data.OleDb;
 using System.Data;
+using OfficeOpenXml;
+using System.IO;
 
 namespace Assignment1
 {
@@ -10,53 +12,46 @@ namespace Assignment1
     {
         static void Main(string[] args)
         {
-            var factories1 = new List<Factory>();
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-            DataTable dataTable = new DataTable();
-            string source = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source='c:\Таблица_резервуаров';Extended Properties='excel 8.0;HDR=Yes;IMEX=1'";
-            OleDbConnection connection = new OleDbConnection(source);
-            string query = "Select * from [Фабрика$]";
-            OleDbDataAdapter data = new OleDbDataAdapter(query, connection);
-            data.Fill(dataTable);
-            for (int i = 0; i < dataTable.Rows.Count; i++)
-            {
-                
-                DataRow dataRow = dataTable.Rows[i];
-                if (dataRow.RowState != DataRowState.Deleted)
-                {
-                    //factories1[i].Id = int.Parse(dataRow["Id"].ToString());
-                    //factories1[i].Name = dataRow["Name"].ToString();
-                    //factories1[i].Description = dataRow["Description"].ToString();
-                }
-            }
-            foreach (var item in factories1)
+            string path = @"C:\Таблица_резервуаров.xlsx";
+            var factories = new List<Factory>();
+            var units = new List<Unit>();
+            var tanks = new List<Tank>();
+
+            factories = ReadExcel(path, 0, factories);
+            units = ReadExcel(path, 1, units);
+            tanks = ReadExcel(path, 2, tanks);
+
+
+            foreach (var item in tanks)
             {
                 Console.WriteLine(item.Name);
             }
 
 
 
-            var factories = new List<Factory>
-            {
-            new Factory { Id = 1, Name = "МНПЗ", Description = "Московский нефтеперерабатывающий завод" },
-            new Factory { Id = 2, Name = "ОНПЗ", Description = "Омский нефтеперерабатывающий завод" }
-            };
+            //var factories = new List<Factory>
+            //{
+            //new Factory { Id = 1, Name = "МНПЗ", Description = "Московский нефтеперерабатывающий завод" },
+            //new Factory { Id = 2, Name = "ОНПЗ", Description = "Омский нефтеперерабатывающий завод" }
+            //};
 
-            var units = new List<Unit>
-            {
-            new Unit { Id = 1, Name = "ГФУ-1", FactoryId = 1 },
-            new Unit { Id = 2, Name = "ГФУ-2", FactoryId = 1 },
-            new Unit { Id = 3, Name = "АВТ-6", FactoryId = 2 }
-            };
+            //var units = new List<Unit>
+            //{
+            //new Unit { Id = 1, Name = "ГФУ-1", FactoryId = 1 },
+            //new Unit { Id = 2, Name = "ГФУ-2", FactoryId = 1 },
+            //new Unit { Id = 3, Name = "АВТ-6", FactoryId = 2 }
+            //};
 
-            var tanks = new List<Tank>
-            { new Tank { Id = 1, Name = "Резервуар 1", Volume = 1500M, MaxVolume = 2000M, UnitId = 1 },
-            new Tank { Id = 2, Name = "Резервуар 2", Volume = 2500M, MaxVolume = 3000M, UnitId = 1 },
-            new Tank { Id = 3, Name = "Дополнительный резервуар 24", Volume = 3000M, MaxVolume = 3000M, UnitId = 2 },
-            new Tank { Id = 4, Name = "Резервуар 35", Volume = 3000M, MaxVolume = 3000M, UnitId = 2 },
-            new Tank { Id = 5, Name = "Резервуар 47", Volume = 4000M, MaxVolume = 5000M, UnitId = 2 },
-            new Tank { Id = 6, Name = "Резервуар 256", Volume = 500M, MaxVolume = 500M, UnitId = 3 }
-            };
+            //var tanks = new List<Tank>
+            //{ new Tank { Id = 1, Name = "Резервуар 1", Volume = 1500M, MaxVolume = 2000M, UnitId = 1 },
+            //new Tank { Id = 2, Name = "Резервуар 2", Volume = 2500M, MaxVolume = 3000M, UnitId = 1 },
+            //new Tank { Id = 3, Name = "Дополнительный резервуар 24", Volume = 3000M, MaxVolume = 3000M, UnitId = 2 },
+            //new Tank { Id = 4, Name = "Резервуар 35", Volume = 3000M, MaxVolume = 3000M, UnitId = 2 },
+            //new Tank { Id = 5, Name = "Резервуар 47", Volume = 4000M, MaxVolume = 5000M, UnitId = 2 },
+            //new Tank { Id = 6, Name = "Резервуар 256", Volume = 500M, MaxVolume = 500M, UnitId = 3 }
+            //};
 
             //FillUp(factories, units);
             //FillUp(units, tanks);
@@ -85,7 +80,80 @@ namespace Assignment1
             
         }
 
+        public static List<Factory> ReadExcel(string path, int sheetNumber, List<Factory> factories)
+        {
+            using (var excelPackage = new ExcelPackage(new FileInfo(path)))
+            {
+                var worksheet = excelPackage.Workbook.Worksheets[sheetNumber];
+                var rowsNumber = worksheet.Dimension.End.Row;
+                var columnsNumber = worksheet.Dimension.End.Column;
+                for (int currentRow = 2; currentRow <= rowsNumber; currentRow++)
+                {
+                    var rowCells = worksheet.Cells[currentRow, 1, currentRow, columnsNumber]
+                                            .Select(c => c.Value == null ? string.Empty : c.Value.ToString())
+                                            .ToArray();
+                    factories.Add(new Factory
+                    {
+                        Id = int.Parse(rowCells[0]),
+                        Name = rowCells[1],
+                        Description = rowCells[2]
+                    });
+                }
 
+            }
+            return factories;
+
+        }
+        public static List<Unit> ReadExcel(string path, int sheetNumber, List<Unit> units)
+        {
+            using (var excelPackage = new ExcelPackage(new FileInfo(path)))
+            {
+                var worksheet = excelPackage.Workbook.Worksheets[sheetNumber];
+                var rowsNumber = worksheet.Dimension.End.Row;
+                var columnsNumber = worksheet.Dimension.End.Column;
+                for (int currentRow = 2; currentRow <= rowsNumber; currentRow++)
+                {
+                    var rowCells = worksheet.Cells[currentRow, 1, currentRow, columnsNumber]
+                                            .Select(c => c.Value == null ? string.Empty : c.Value.ToString())
+                                            .ToArray();
+                    units.Add(new Unit
+                    {
+                        Id = int.Parse(rowCells[0]),
+                        Name = rowCells[1],
+                        FactoryId = int.Parse(rowCells[2])
+                    });
+                }
+
+            }
+            return units;
+
+        }
+        public static List<Tank> ReadExcel(string path, int sheetNumber, List<Tank> tanks)
+        {
+            using (var excelPackage = new ExcelPackage(new FileInfo(path)))
+            {
+                var worksheet = excelPackage.Workbook.Worksheets[sheetNumber];
+                var rowsNumber = worksheet.Dimension.End.Row;
+                var columnsNumber = worksheet.Dimension.End.Column;
+                for (int currentRow = 2; currentRow <= rowsNumber; currentRow++)
+                {
+                    var rowCells = worksheet.Cells[currentRow, 1, currentRow, columnsNumber]
+                                            .Select(c => c.Value == null ? string.Empty : c.Value.ToString())
+                                            .ToArray();
+                    tanks.Add(new Tank
+                    {
+                        Id = int.Parse(rowCells[0]),
+                        Name = rowCells[1],
+                        Volume = decimal.Parse(rowCells[2]),
+                        MaxVolume = decimal.Parse(rowCells[3]),
+                        UnitId = int.Parse(rowCells[4])
+                    });
+                }
+
+            }
+            return tanks;
+
+        }
 
 
         public static decimal GetTotalVolume(List<Tank> tanks)
