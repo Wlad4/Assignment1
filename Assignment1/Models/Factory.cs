@@ -9,7 +9,7 @@ namespace Assignment1
         public string Name { get; set; }
         public string Description { get; set; }
         [JsonIgnore]
-        public List<Unit> Units { get; set; } = new List<Unit>();
+        public List<Unit> Units { get; set; } = new List<Unit>(); 
     }
 
 

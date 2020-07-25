@@ -1,5 +1,4 @@
-﻿
-namespace Assignment1
+﻿namespace Assignment1
 {
     public class Tank
     {

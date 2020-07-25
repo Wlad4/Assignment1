@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Newtonsoft.Json;
+
 namespace Assignment1
 {
     public class Unit
