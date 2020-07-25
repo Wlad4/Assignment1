@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Data.OleDb;
 using System.Data;
 using OfficeOpenXml;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace Assignment1
 {
@@ -14,70 +14,39 @@ namespace Assignment1
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-            string path = @"C:\Таблица_резервуаров.xlsx";
-            var factories = new List<Factory>();
-            var units = new List<Unit>();
-            var tanks = new List<Tank>();
+            var path = @"C:\Таблица_резервуаров.xlsx";
 
-            factories = ReadExcel(path, 0, factories);
-            units = ReadExcel(path, 1, units);
-            tanks = ReadExcel(path, 2, tanks);
+            var factories = ReadExcel(path, 0, new List<Factory>());
+            var units = ReadExcel(path, 1, new List<Unit>());
+            var tanks = ReadExcel(path, 2, new List<Tank>());
 
+            FillUp(factories, units);
+            FillUp(units, tanks);
 
-            foreach (var item in tanks)
-            {
-                Console.WriteLine(item.Name);
-            }
+            Print(factories);
+            Print(units);
+            Print(tanks);
 
+            LoadToJson("Factories.json", factories);
+            LoadToJson("Units.json", units);
+            LoadToJson("Tanks.json", tanks);
 
+        }
 
-            //var factories = new List<Factory>
-            //{
-            //new Factory { Id = 1, Name = "МНПЗ", Description = "Московский нефтеперерабатывающий завод" },
-            //new Factory { Id = 2, Name = "ОНПЗ", Description = "Омский нефтеперерабатывающий завод" }
-            //};
-
-            //var units = new List<Unit>
-            //{
-            //new Unit { Id = 1, Name = "ГФУ-1", FactoryId = 1 },
-            //new Unit { Id = 2, Name = "ГФУ-2", FactoryId = 1 },
-            //new Unit { Id = 3, Name = "АВТ-6", FactoryId = 2 }
-            //};
-
-            //var tanks = new List<Tank>
-            //{ new Tank { Id = 1, Name = "Резервуар 1", Volume = 1500M, MaxVolume = 2000M, UnitId = 1 },
-            //new Tank { Id = 2, Name = "Резервуар 2", Volume = 2500M, MaxVolume = 3000M, UnitId = 1 },
-            //new Tank { Id = 3, Name = "Дополнительный резервуар 24", Volume = 3000M, MaxVolume = 3000M, UnitId = 2 },
-            //new Tank { Id = 4, Name = "Резервуар 35", Volume = 3000M, MaxVolume = 3000M, UnitId = 2 },
-            //new Tank { Id = 5, Name = "Резервуар 47", Volume = 4000M, MaxVolume = 5000M, UnitId = 2 },
-            //new Tank { Id = 6, Name = "Резервуар 256", Volume = 500M, MaxVolume = 500M, UnitId = 3 }
-            //};
-
-            //FillUp(factories, units);
-            //FillUp(units, tanks);
-
-            //GetList(factories);
-            //GetList(units);
-            //GetList(tanks);
-
-            //var totalValue = GetTotalVolume(tanks);
-
-            //Console.WriteLine("");
-            //Console.WriteLine("");
-            //Console.WriteLine("");
-
-
-            //Console.WriteLine("Search: ");
-            //string selection = Console.ReadLine();
-
-            //var factory1 = SearchByCode(selection, factories);
-            //var factory2 = SearchByLINQ(selection, factories);
-            //var unit1 = SearchByLINQ(selection, units);
-            //var unit2 = SearchByLINQ(selection, units);
-            //var tank1 = SearchByLINQ(selection, tanks);
-            //var tank2 = SearchByLINQ(selection, tanks);
-
-            
+        public static void LoadToJson(string path, List<Factory> factories)
+        {
+            var json = JsonConvert.SerializeObject(factories, Formatting.Indented);
+            File.WriteAllText(path, json);
+        }
+        public static void LoadToJson(string path, List<Unit> units)
+        {
+            var json = JsonConvert.SerializeObject(units, Formatting.Indented);
+            File.WriteAllText(path, json);
+        }
+        public static void LoadToJson(string path, List<Tank> tanks)
+        {
+            var json = JsonConvert.SerializeObject(tanks, Formatting.Indented);
+            File.WriteAllText(path, json);
         }
 
         public static List<Factory> ReadExcel(string path, int sheetNumber, List<Factory> factories)
@@ -155,7 +124,6 @@ namespace Assignment1
 
         }
 
-
         public static decimal GetTotalVolume(List<Tank> tanks)
         {
             decimal _sum = 0;
@@ -167,7 +135,7 @@ namespace Assignment1
             return _sum;
         }
 
-        public static Factory SearchByCode(string name, List<Factory> factories)
+        public static Factory Search(string name, List<Factory> factories)
         {
             var result = new List<Factory>();
             foreach (var factory in factories)
@@ -180,7 +148,7 @@ namespace Assignment1
 
             if (result.Count == 0)
             {
-                Console.WriteLine("Error occured. Name not found"); /////////////////////////////////
+                Console.WriteLine("Error occured. Name not found");
             }
             else
             {
@@ -196,7 +164,7 @@ namespace Assignment1
             }
             return result.FirstOrDefault();
         }
-        public static Unit SearchByCode(string name, List<Unit> units)
+        public static Unit Search(string name, List<Unit> units)
         {
             var result = new List<Unit>();
             foreach (var unit in units)
@@ -209,7 +177,7 @@ namespace Assignment1
 
             if (result.Count == 0)
             {
-                Console.WriteLine("Error occured. Name not found"); /////////////////////////////////
+                Console.WriteLine("Error occured. Name not found"); 
             }
             else
             {
@@ -225,7 +193,7 @@ namespace Assignment1
             }
             return result.FirstOrDefault();
         }
-        public static Tank SearchByCode(string name, List<Tank> tanks)
+        public static Tank Search(string name, List<Tank> tanks)
         {
             var result = new List<Tank>();
             foreach (var tank in tanks)
@@ -238,73 +206,7 @@ namespace Assignment1
 
             if (result.Count == 0)
             {
-                Console.WriteLine("Error occured. Name not found"); /////////////////////////////////
-            }
-            else
-            {
-                foreach (var tank in result)
-                {
-                    Console.WriteLine($"Tank: Id = {tank.Id}, Name = {tank.Name}, Volume = {tank.Volume}," +
-                        $" Max volume = {tank.MaxVolume}  Unit = {tank.Unit}");
-                }
-            }
-            return result.FirstOrDefault();
-        }
-
-        public static Factory SearchByLINQ(string name, List<Factory> factories)
-        {
-            var result = (from f in factories
-                          where f.Name == name
-                          select f).ToList();
-            if (result.Count == 0)
-            {
-                Console.WriteLine("Error occured. Name not found"); /////////////////////////////////
-            }
-            else
-            {
-                foreach (var factory in result)
-                {
-                    Console.WriteLine($"Factory: Id = {factory.Id}, Name = {factory.Name}, Description = {factory.Description}");
-                    Console.WriteLine("All units in this factory:");
-                    foreach (var unit in factory.Units)
-                    {
-                        Console.WriteLine($"Units: Name = {unit.Name}");
-                    }
-                }
-            }
-            return result.FirstOrDefault();
-        }
-        public static Unit SearchByLINQ(string name, List<Unit> units)
-        {
-            var result = (from u in units
-                          where u.Name == name
-                          select u).ToList();
-            if (result.Count == 0)
-            {
-                Console.WriteLine("Error occured. Name not found"); /////////////////////////////////
-            }
-            else
-            {
-                foreach (var unit in result)
-                {
-                    Console.WriteLine($"Unit: Id = {unit.Id}, Name = {unit.Name}, Factory = {unit.Factory}");
-                    Console.WriteLine("All tanks in this unit:");
-                    foreach (var tank in unit.Tanks)
-                    {
-                        Console.WriteLine($"Tanks: Name = {tank.Name}, Volume = {tank.Volume}, Max volume = {tank.MaxVolume}");
-                    }
-                }
-            }
-            return result.FirstOrDefault();
-        }
-        public static Tank SearchByLINQ(string name, List<Tank> tanks)
-        {
-            var result = (from t in tanks
-                          where t.Name == name
-                          select t).ToList();
-            if (result.Count == 0)
-            {
-                Console.WriteLine("Error occured. Name not found"); /////////////////////////////////
+                Console.WriteLine("Error occured. Name not found"); 
             }
             else
             {
@@ -346,21 +248,21 @@ namespace Assignment1
             }
         }
 
-        public static void GetList(List<Factory> factories)
+        public static void Print(List<Factory> factories)
         {
             foreach (var item in factories)
             {
                 Console.WriteLine($" Id = {item.Id}, Name = {item.Name}, Description = {item.Description}");
             }
         }
-        public static void GetList(List<Unit> units)
+        public static void Print(List<Unit> units)
         {
             foreach (var item in units)
             {
                 Console.WriteLine($" Id = {item.Id}, Name = {item.Name}, Factory = {item.Factory.Name}");
             }
         }
-        public static void GetList(List<Tank> tanks)
+        public static void Print(List<Tank> tanks)
         {
             foreach (var item in tanks)
             {
@@ -369,36 +271,4 @@ namespace Assignment1
             }
         }
     }
-   
-    
-    
-    public class Factory
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public List<Unit> Units { get; set; } = new List<Unit>();
-    }
-
-    public class Unit
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public int FactoryId { get; set; }
-        public Factory Factory { get; set; }
-        public List<Tank> Tanks { get; set; } = new List<Tank>();
-    }
-
-    public class Tank
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public decimal Volume { get; set; }
-        public decimal MaxVolume { get; set; }
-        public int UnitId { get; set; }
-        public Unit Unit { get; set; }
-
-    }
-
-
 }
