@@ -12,6 +12,4 @@ namespace Assignment1
         [JsonIgnore]
         public List<Tank> Tanks { get; set; } = new List<Tank>();
     }
-
-
 }

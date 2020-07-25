@@ -11,6 +11,4 @@ namespace Assignment1
         [JsonIgnore]
         public List<Unit> Units { get; set; } = new List<Unit>(); 
     }
-
-
 }
